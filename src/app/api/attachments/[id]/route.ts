@@ -80,6 +80,7 @@ export async function GET(
       "Content-Disposition": `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
       "Content-Length": String(bytes.byteLength),
       "Content-Type": attachment.contentType,
+      "X-Attachment-Storage": attachment.storageKey ? "s3" : "postgres",
       "X-Content-Type-Options": "nosniff",
     },
   });
