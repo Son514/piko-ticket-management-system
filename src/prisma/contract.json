@@ -24,6 +24,25 @@
   "domain": {
     "namespaces": {
       "public": {
+        "enum": {
+          "Role": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "customer",
+                "value": "customer"
+              },
+              {
+                "name": "agent",
+                "value": "agent"
+              },
+              {
+                "name": "admin",
+                "value": "admin"
+              }
+            ]
+          }
+        },
         "models": {
           "PasswordResetToken": {
             "fields": {
@@ -298,6 +317,13 @@
                   "kind": "scalar"
                 }
               },
+              "deactivatedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "email": {
                 "nullable": false,
                 "type": {
@@ -309,6 +335,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "isActive": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
                   "kind": "scalar"
                 }
               },
@@ -324,6 +357,19 @@
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                }
+              },
+              "role": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "Role",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "updatedAt": {
@@ -393,17 +439,26 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "deactivatedAt": {
+                  "column": "deactivatedAt"
+                },
                 "email": {
                   "column": "email"
                 },
                 "id": {
                   "column": "id"
                 },
+                "isActive": {
+                  "column": "isActive"
+                },
                 "name": {
                   "column": "name"
                 },
                 "passwordHash": {
                   "column": "passwordHash"
+                },
+                "role": {
+                  "column": "role"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -677,6 +732,13 @@
               ]
             },
             "User": {
+              "checks": [
+                {
+                  "expression": "\"role\" IN ('customer', 'agent', 'admin')",
+                  "name": "User_role_check_7e859979",
+                  "prefix": "User_role_check"
+                }
+              ],
               "columns": {
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -686,6 +748,11 @@
                     "kind": "function"
                   },
                   "nullable": false
+                },
+                "deactivatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true
                 },
                 "email": {
                   "codecId": "pg/text@1",
@@ -701,6 +768,15 @@
                   },
                   "nullable": false
                 },
+                "isActive": {
+                  "codecId": "pg/bool@1",
+                  "dataType": "pg/bool",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nullable": false
+                },
                 "name": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -710,6 +786,21 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
+                },
+                "role": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "customer"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "Role",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -723,7 +814,24 @@
                 }
               },
               "foreignKeys": [],
-              "indexes": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "isActive"
+                  ],
+                  "name": "User_isActive_idx_77fe3ba1",
+                  "prefix": "User_isActive_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "role"
+                  ],
+                  "name": "User_role_idx_2c1ddf83",
+                  "prefix": "User_role_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -737,13 +845,23 @@
                 }
               ]
             }
+          },
+          "valueSet": {
+            "Role": {
+              "kind": "valueSet",
+              "values": [
+                "customer",
+                "agent",
+                "admin"
+              ]
+            }
           }
         },
         "id": "public",
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "ba91225dcc22201aecd9dd196634ca066ce6bef2c4f242ecd6316429585efeee"
+    "storageHash": "653e54b4b85d6e59cb077236add11c0959efd1aea52bb2c75ceb2d5fa1e871a1"
   },
   "execution": {
     "executionHash": "87555a97148e599ef76723d50d85ccaddcd46a8d478c0badceae8c8f3d1362d1",

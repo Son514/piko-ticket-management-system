@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { connectDatabase, db } from "@/prisma/db";
+import type { Role } from "@/lib/roles";
 import { getAppConfig } from "../config";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS, SESSION_TTL_MS } from "./constants";
 import { generateToken, hashToken } from "./tokens";
@@ -14,6 +15,8 @@ export type SessionUser = {
   email: string;
   username: string | null;
   name: string | null;
+  role: Role;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -91,11 +94,20 @@ export const getSession = cache(async (): Promise<CurrentSession | null> => {
   }
 
   const user = await db.orm.public.User
-    .select("id", "email", "username", "name", "createdAt", "updatedAt")
+    .select(
+      "id",
+      "email",
+      "username",
+      "name",
+      "role",
+      "isActive",
+      "createdAt",
+      "updatedAt",
+    )
     .where({ id: session.userId })
     .first();
 
-  if (!user) {
+  if (!user || !user.isActive) {
     await db.orm.public.Session.where({ id: session.id }).deleteAll();
     return null;
   }
@@ -114,6 +126,16 @@ export async function requireUser(): Promise<CurrentSession> {
   const session = await getSession();
   if (!session) redirect("/login");
   return session;
+}
+
+export async function requireRole(...roles: Role[]): Promise<CurrentSession> {
+  const session = await requireUser();
+  if (!roles.includes(session.user.role)) redirect("/dashboard");
+  return session;
+}
+
+export async function requireAdmin(): Promise<CurrentSession> {
+  return requireRole("admin");
 }
 
 export async function destroySession(): Promise<void> {

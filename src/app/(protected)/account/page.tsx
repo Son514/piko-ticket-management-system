@@ -1,5 +1,6 @@
 import { requireUser } from "@/app/server/auth/session";
 import { AccountForm } from "@/components/account-form";
+import { ROLE_LABELS } from "@/lib/roles";
 import {
   Card,
   CardContent,
@@ -49,6 +50,16 @@ export default async function AccountPage() {
               <div>
                 <dt className="text-muted-foreground">Email</dt>
                 <dd className="font-medium break-all">{user.email}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Role</dt>
+                <dd className="font-medium">{ROLE_LABELS[user.role]}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Status</dt>
+                <dd className="font-medium">
+                  {user.isActive ? "Active" : "Deactivated"}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Member since</dt>

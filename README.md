@@ -29,6 +29,28 @@ In local development, seeded demo accounts use the password `password123`. Demo 
 | `bob@prisma.io` | `bob` |
 | `carol@prisma.io` | `carol` |
 
+## Roles
+
+- **Customer** — sees only their own tickets.
+- **Agent** — sees the full ticket queue.
+- **Admin** — sees the ticket queue and can manage users, roles, and account access from `/admin/users`.
+
+New signups default to `customer`. Admins can change roles and deactivate accounts; deactivation revokes the user's sessions and blocks sign-in.
+
+To bootstrap the first admin, promote an existing account:
+
+```bash
+bun run role:set you@example.com admin
+```
+
+For production, run the same command with the production `DATABASE_URL` from the Prisma Console:
+
+```bash
+DATABASE_URL="<production-database-url>" bun run role:set you@example.com admin
+```
+
+Local demo roles are Alice (`admin`), Bob (`agent`), and Carol (`customer`). Existing demo users can be promoted with the same command.
+
 ## Email
 
 Copy `.env.example` to `.env` and fill in the Gmail values. `SMTP_PASS` must be a Google App Password, not your account password. If SMTP is not configured, the reset link is logged to the server console in development.

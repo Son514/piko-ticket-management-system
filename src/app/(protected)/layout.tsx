@@ -3,6 +3,7 @@ import Link from "next/link";
 import { signOutAction } from "@/app/server/auth/actions";
 import { requireUser } from "@/app/server/auth/session";
 import { Button } from "@/components/ui/button";
+import { isStaff, ROLE_LABELS } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const { user } = await requireUser();
+  const staff = isStaff(user.role);
 
   return (
     <div className="min-h-svh bg-muted/40">
@@ -25,6 +27,14 @@ export default async function ProtectedLayout({
               <Link href="/dashboard" className="transition-colors hover:text-foreground">
                 Dashboard
               </Link>
+              <Link href="/tickets" className="transition-colors hover:text-foreground">
+                {staff ? "Ticket queue" : "My tickets"}
+              </Link>
+              {user.role === "admin" ? (
+                <Link href="/admin/users" className="transition-colors hover:text-foreground">
+                  Users
+                </Link>
+              ) : null}
               <Link href="/account" className="transition-colors hover:text-foreground">
                 Account
               </Link>
@@ -32,7 +42,10 @@ export default async function ProtectedLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
+            <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground sm:inline">
+              {ROLE_LABELS[user.role]}
+            </span>
+            <span className="hidden text-sm text-muted-foreground md:inline">
               {user.email}
             </span>
             <form action={signOutAction}>

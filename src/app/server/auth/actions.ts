@@ -95,6 +95,8 @@ export async function signUpAction(
       name: name || null,
       username: null,
       passwordHash,
+      role: "customer",
+      isActive: true,
     });
 
     await createSession(user.id);
@@ -143,7 +145,7 @@ export async function signInAction(
   }
 
   const user = await db.orm.public.User
-    .select("id", "email", "passwordHash")
+    .select("id", "email", "passwordHash", "isActive")
     .where({ email })
     .first();
 
@@ -155,6 +157,13 @@ export async function signInAction(
 
   if (!(await verifyPassword(password, user.passwordHash))) {
     return { error: "Invalid email or password.", values };
+  }
+
+  if (!user.isActive) {
+    return {
+      error: "This account has been deactivated. Contact an administrator.",
+      values,
+    };
   }
 
   await createSession(user.id);
@@ -196,11 +205,11 @@ export async function requestPasswordResetAction(
     await connectDatabase();
 
     const user = await db.orm.public.User
-      .select("id", "email", "name")
+      .select("id", "email", "name", "isActive")
       .where({ email })
       .first();
 
-    if (!user) return success;
+    if (!user || !user.isActive) return success;
 
     const token = generateToken();
     const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();

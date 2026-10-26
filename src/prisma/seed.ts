@@ -4,10 +4,10 @@ import { connectDatabase, db } from "./db.ts";
 export const DEMO_PASSWORD = "password123";
 
 const users = [
-  { email: "alice@prisma.io", username: "alice", name: "Alice" },
-  { email: "bob@prisma.io", username: "bob", name: "Bob" },
-  { email: "carol@prisma.io", username: "carol", name: "Carol" },
-];
+  { email: "alice@prisma.io", username: "alice", name: "Alice", role: "admin" },
+  { email: "bob@prisma.io", username: "bob", name: "Bob", role: "agent" },
+  { email: "carol@prisma.io", username: "carol", name: "Carol", role: "customer" },
+] as const;
 
 let pendingSeed: Promise<void> | undefined;
 

@@ -1,16 +1,29 @@
 // use prisma-8
 
+enum Role {
+  @@type("pg/text@1")
+  customer = "customer"
+  agent    = "agent"
+  admin    = "admin"
+}
+
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  username     String?
-  name         String?
-  passwordHash String?
-  posts        Post[]
-  sessions     Session[]
-  resetTokens  PasswordResetToken[]
-  createdAt    TimestamptzString @default(now())
-  updatedAt    temporal.updatedAtString()
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  username      String?
+  name          String?
+  passwordHash  String?
+  role          Role     @default(customer)
+  isActive      Boolean  @default(true)
+  deactivatedAt TimestamptzString?
+  posts         Post[]
+  sessions      Session[]
+  resetTokens   PasswordResetToken[]
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  @@index([role])
+  @@index([isActive])
 }
 
 model Session {
