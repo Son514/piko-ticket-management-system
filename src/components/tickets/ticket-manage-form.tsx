@@ -1,11 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
-
 import { updateTicketAction } from "@/app/server/ticket-update-actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
+import { useNativeFormAction } from "@/lib/forms/use-native-form-action";
 import {
   TICKET_PRIORITIES,
   TICKET_PRIORITY_LABELS,
@@ -27,13 +25,10 @@ export function TicketManageForm({
   status: TicketStatus;
   priority: TicketPriority;
 }) {
-  const [state, formAction, pending] = useActionState(
-    updateTicketAction,
-    initialAuthState,
-  );
+  const { state, onSubmit, pending } = useNativeFormAction(updateTicketAction);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <input type="hidden" name="ticketId" value={ticketId} />
 
       <div>

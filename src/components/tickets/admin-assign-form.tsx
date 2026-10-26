@@ -1,12 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
-
 import { assignTicketAction } from "@/app/server/ticket-update-actions";
 import type { StaffOption } from "@/app/server/tickets";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
+import { useNativeFormAction } from "@/lib/forms/use-native-form-action";
 
 const selectClass =
   "h-9 w-full rounded-md border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
@@ -20,13 +18,10 @@ export function AdminAssignForm({
   assigneeId: number | null;
   agents: StaffOption[];
 }) {
-  const [state, formAction, pending] = useActionState(
-    assignTicketAction,
-    initialAuthState,
-  );
+  const { state, onSubmit, pending } = useNativeFormAction(assignTicketAction);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form onSubmit={onSubmit} className="flex flex-col gap-3">
       <input type="hidden" name="ticketId" value={ticketId} />
 
       <div>
