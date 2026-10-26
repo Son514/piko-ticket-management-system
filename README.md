@@ -61,6 +61,20 @@ bun run test:coverage
 
 Tests run in the deploy workflow before preview and production deployments.
 
+## Object storage
+
+Ticket attachments use a Prisma Object Store bucket through the S3 API when these variables are configured:
+
+```env
+S3_ENDPOINT=
+S3_BUCKET=
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_REGION=auto
+```
+
+Add them under Preview and Production in the Prisma Console for deployed environments. If they are missing, new attachments fall back to Postgres; existing Postgres attachments remain downloadable either way.
+
 ## Email
 
 Copy `.env.example` to `.env` and fill in the Gmail values. `SMTP_PASS` must be a Google App Password, not your account password. If SMTP is not configured, the reset link is logged to the server console in development.
