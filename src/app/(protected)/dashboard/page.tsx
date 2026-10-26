@@ -29,6 +29,12 @@ function formatDate(value: string | null | undefined): string {
 export default async function DashboardPage() {
   const { user } = await requireUser();
   const staff = isStaff(user.role);
+  const ticketsLabel =
+    user.role === "admin"
+      ? "All tickets"
+      : staff
+        ? "Ticket queue"
+        : "My tickets";
   const [posts, team] = await Promise.all([
     listAccountPosts(),
     staff ? listUsers(5).catch(() => []) : Promise.resolve([]),
@@ -50,7 +56,7 @@ export default async function DashboardPage() {
             href="/tickets"
             className={buttonVariants({ variant: "outline" })}
           >
-            {staff ? "Ticket queue" : "My tickets"}
+            {ticketsLabel}
           </Link>
           <Link
             href="/account"

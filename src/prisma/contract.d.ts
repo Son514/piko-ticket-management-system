@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'455f6306e76be75e49a54066de3e45bfed8541a694c9ad86ec83f0a6fa4174c7'>;
+  StorageHashBase<'2523237cd5c8b7bf117a11e835cb5472c347a91a11bf861a1956c6b56e8de435'>;
 export type ExecutionHash =
   ExecutionHashBase<'87555a97148e599ef76723d50d85ccaddcd46a8d478c0badceae8c8f3d1362d1'>;
 export type ProfileHash =
@@ -250,6 +250,10 @@ type FieldTypeOverrides = {
           readonly output: 'low' | 'medium' | 'high' | 'urgent';
           readonly input: 'low' | 'medium' | 'high' | 'urgent';
         };
+        readonly status: {
+          readonly output: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
+          readonly input: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
+        };
       };
       readonly User: {
         readonly role: {
@@ -284,6 +288,10 @@ type ColumnTypeOverrides = {
       readonly priority: {
         readonly output: 'low' | 'medium' | 'high' | 'urgent';
         readonly input: 'low' | 'medium' | 'high' | 'urgent';
+      };
+      readonly status: {
+        readonly output: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
+        readonly input: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
       };
     };
     readonly User: {
@@ -332,17 +340,20 @@ export namespace Models {
     readonly [RelationKeys]?: 'user';
   };
   export type public_Post = {
+    assigneeId: FieldOutputTypes['public']['Post']['assigneeId'];
     authorId: FieldOutputTypes['public']['Post']['authorId'];
     category: FieldOutputTypes['public']['Post']['category'];
     content: FieldOutputTypes['public']['Post']['content'];
     createdAt: FieldOutputTypes['public']['Post']['createdAt'];
     id: FieldOutputTypes['public']['Post']['id'];
     priority: FieldOutputTypes['public']['Post']['priority'];
+    status: FieldOutputTypes['public']['Post']['status'];
     title: FieldOutputTypes['public']['Post']['title'];
     updatedAt: FieldOutputTypes['public']['Post']['updatedAt'];
+    assignee: public_User | null;
     attachments: public_Attachment[];
     author: public_User;
-    readonly [RelationKeys]?: 'attachments' | 'author';
+    readonly [RelationKeys]?: 'assignee' | 'attachments' | 'author';
   };
   export type public_Session = {
     createdAt: FieldOutputTypes['public']['Session']['createdAt'];
@@ -365,10 +376,11 @@ export namespace Models {
     role: FieldOutputTypes['public']['User']['role'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
+    assignedTickets: public_Post[];
     posts: public_Post[];
     resetTokens: public_PasswordResetToken[];
     sessions: public_Session[];
-    readonly [RelationKeys]?: 'posts' | 'resetTokens' | 'sessions';
+    readonly [RelationKeys]?: 'assignedTickets' | 'posts' | 'resetTokens' | 'sessions';
   };
 }
 
@@ -546,6 +558,12 @@ type ContractBase = Omit<
             };
             readonly Post: {
               columns: {
+                readonly assigneeId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly authorId: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
@@ -595,6 +613,16 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'open'>;
+                  };
+                  readonly many: false;
+                };
                 readonly title: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -612,9 +640,21 @@ type ContractBase = Omit<
               uniques: readonly [];
               indexes: readonly [
                 {
+                  readonly name: 'Post_assigneeId_idx_fd12ae38';
+                  readonly prefix: 'Post_assigneeId_idx';
+                  readonly columns: readonly ['assigneeId'];
+                  readonly unique: false;
+                },
+                {
                   readonly name: 'Post_authorId_idx_e47547ed';
                   readonly prefix: 'Post_authorId_idx';
                   readonly columns: readonly ['authorId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Post_status_idx_e98638ab';
+                  readonly prefix: 'Post_status_idx';
+                  readonly columns: readonly ['status'];
                   readonly unique: false;
                 },
               ];
@@ -624,6 +664,18 @@ type ContractBase = Omit<
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Post';
                     readonly columns: readonly ['authorId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Post';
+                    readonly columns: readonly ['assigneeId'];
                   };
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
@@ -810,6 +862,10 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['low', 'medium', 'high', 'urgent'];
             };
+            readonly TicketStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['open', 'in_progress', 'waiting', 'resolved', 'closed'];
+            };
           };
         };
       };
@@ -958,6 +1014,10 @@ type ContractBase = Omit<
           };
           readonly Post: {
             readonly fields: {
+              readonly assigneeId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly authorId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -985,6 +1045,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly title: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -998,6 +1062,15 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly assignee: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['assigneeId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly attachments: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -1023,12 +1096,14 @@ type ContractBase = Omit<
               readonly table: 'Post';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly assigneeId: { readonly column: 'assigneeId' };
                 readonly authorId: { readonly column: 'authorId' };
                 readonly category: { readonly column: 'category' };
                 readonly content: { readonly column: 'content' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly priority: { readonly column: 'priority' };
+                readonly status: { readonly column: 'status' };
                 readonly title: { readonly column: 'title' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -1147,6 +1222,14 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly assignedTickets: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Post' };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['assigneeId'];
+                };
+              };
               readonly posts: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Post' };
                 readonly cardinality: '1:N';
@@ -1224,6 +1307,16 @@ type ContractBase = Omit<
               { readonly name: 'urgent'; readonly value: 'urgent' },
             ];
           };
+          readonly TicketStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'open'; readonly value: 'open' },
+              { readonly name: 'in_progress'; readonly value: 'in_progress' },
+              { readonly name: 'waiting'; readonly value: 'waiting' },
+              { readonly name: 'resolved'; readonly value: 'resolved' },
+              { readonly name: 'closed'; readonly value: 'closed' },
+            ];
+          };
         };
         readonly enumMemberTypes?: {
           readonly Role: readonly [
@@ -1243,6 +1336,13 @@ type ContractBase = Omit<
             { readonly name: 'medium'; readonly value: 'medium' },
             { readonly name: 'high'; readonly value: 'high' },
             { readonly name: 'urgent'; readonly value: 'urgent' },
+          ];
+          readonly TicketStatus: readonly [
+            { readonly name: 'open'; readonly value: 'open' },
+            { readonly name: 'in_progress'; readonly value: 'in_progress' },
+            { readonly name: 'waiting'; readonly value: 'waiting' },
+            { readonly name: 'resolved'; readonly value: 'resolved' },
+            { readonly name: 'closed'; readonly value: 'closed' },
           ];
         };
       };

@@ -14,6 +14,12 @@ export default async function ProtectedLayout({
 }) {
   const { user } = await requireUser();
   const staff = isStaff(user.role);
+  const ticketsLabel =
+    user.role === "admin"
+      ? "All tickets"
+      : staff
+        ? "Ticket queue"
+        : "My tickets";
 
   return (
     <div className="min-h-svh bg-muted/40">
@@ -28,7 +34,7 @@ export default async function ProtectedLayout({
                 Dashboard
               </Link>
               <Link href="/tickets" className="transition-colors hover:text-foreground">
-                {staff ? "Ticket queue" : "My tickets"}
+                {ticketsLabel}
               </Link>
               {user.role === "admin" ? (
                 <Link href="/admin/users" className="transition-colors hover:text-foreground">
