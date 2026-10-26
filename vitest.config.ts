@@ -33,6 +33,7 @@ export default defineConfig({
         "src/app/server/auth/password.ts",
         "src/app/server/auth/rate-limit.ts",
         "src/app/server/auth/tokens.ts",
+        "src/app/server/storage.ts",
       ],
       exclude: ["**/*.test.ts"],
     },

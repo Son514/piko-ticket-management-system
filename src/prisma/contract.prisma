@@ -101,7 +101,8 @@ model Attachment {
   filename    String
   contentType String
   size        Int
-  data        Bytes
+  data        Bytes?
+  storageKey  String?
   createdAt   TimestamptzString @default(now())
   @@index([ticketId])
 }

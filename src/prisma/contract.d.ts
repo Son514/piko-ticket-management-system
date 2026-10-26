@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'2523237cd5c8b7bf117a11e835cb5472c347a91a11bf861a1956c6b56e8de435'>;
+  StorageHashBase<'aa0cbbe2faa6bb7a67ca3961092de9f934f1deb117c419a29845644a23342a09'>;
 export type ExecutionHash =
   ExecutionHashBase<'87555a97148e599ef76723d50d85ccaddcd46a8d478c0badceae8c8f3d1362d1'>;
 export type ProfileHash =
@@ -325,6 +325,7 @@ export namespace Models {
     filename: FieldOutputTypes['public']['Attachment']['filename'];
     id: FieldOutputTypes['public']['Attachment']['id'];
     size: FieldOutputTypes['public']['Attachment']['size'];
+    storageKey: FieldOutputTypes['public']['Attachment']['storageKey'];
     ticketId: FieldOutputTypes['public']['Attachment']['ticketId'];
     ticket: public_Post;
     readonly [RelationKeys]?: 'ticket';
@@ -430,7 +431,7 @@ type ContractBase = Omit<
                 readonly data: {
                   readonly dataType: 'pg/bytea';
                   readonly codecId: 'pg/bytea@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly filename: {
@@ -453,6 +454,12 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly storageKey: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly ticketId: {
@@ -907,7 +914,7 @@ type ContractBase = Omit<
                 };
               };
               readonly data: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bytea@1' };
               };
               readonly filename: {
@@ -921,6 +928,10 @@ type ContractBase = Omit<
               readonly size: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly storageKey: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly ticketId: {
                 readonly nullable: false;
@@ -948,6 +959,7 @@ type ContractBase = Omit<
                 readonly filename: { readonly column: 'filename' };
                 readonly id: { readonly column: 'id' };
                 readonly size: { readonly column: 'size' };
+                readonly storageKey: { readonly column: 'storageKey' };
                 readonly ticketId: { readonly column: 'ticketId' };
               };
             };

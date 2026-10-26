@@ -12,6 +12,12 @@ import { ticketFieldsSchema } from "@/lib/validation/tickets";
 import { connectDatabase, db } from "@/prisma/db";
 import { requireUser } from "./auth/session";
 import type { AuthState } from "./auth/types";
+import {
+  buildAttachmentKey,
+  deleteAttachmentObject,
+  putAttachmentObject,
+  readS3Config,
+} from "./storage";
 
 export async function createTicketAction(
   _previousState: AuthState,
@@ -50,9 +56,33 @@ export async function createTicketAction(
         filename: file.name.replace(/[\r\n/\\]/g, "_").slice(0, 255),
         contentType: normalizeAttachmentType(file.type),
         size: file.size,
-        data: new Uint8Array(await file.arrayBuffer()),
+        bytes: new Uint8Array(await file.arrayBuffer()),
       }
     : null;
+
+  const s3 = readS3Config();
+  let storageKey: string | null = null;
+
+  if (attachment && s3) {
+    storageKey = buildAttachmentKey(attachment.filename);
+    try {
+      await putAttachmentObject(
+        s3,
+        storageKey,
+        attachment.bytes,
+        attachment.contentType,
+      );
+    } catch (error) {
+      console.error("[tickets] attachment upload failed", error);
+      return {
+        error: "We could not upload your attachment. Please try again.",
+      };
+    }
+  } else if (attachment) {
+    console.warn(
+      "[storage] S3 is not configured; storing the attachment in Postgres.",
+    );
+  }
 
   try {
     await connectDatabase();
@@ -69,12 +99,22 @@ export async function createTicketAction(
       if (attachment) {
         await tx.orm.public.Attachment.create({
           ticketId: ticket.id,
-          ...attachment,
+          filename: attachment.filename,
+          contentType: attachment.contentType,
+          size: attachment.size,
+          ...(storageKey
+            ? { storageKey }
+            : { data: attachment.bytes }),
         });
       }
     });
   } catch (error) {
     console.error("[tickets] create failed", error);
+
+    if (storageKey && s3) {
+      await deleteAttachmentObject(s3, storageKey);
+    }
+
     return { error: "We could not create your ticket. Please try again." };
   }
 
