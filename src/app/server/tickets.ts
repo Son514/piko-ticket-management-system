@@ -254,3 +254,16 @@ export async function listAssignableStaff(): Promise<StaffOption[]> {
     .orderBy((staff) => staff.email.asc())
     .all();
 }
+
+export async function listAssignableAgents(): Promise<StaffOption[]> {
+  const { user } = await requireUser();
+  if (user.role !== "admin") return [];
+
+  await connectDatabase();
+
+  return db.orm.public.User
+    .select("id", "name", "email", "role")
+    .where((staff) => and(staff.isActive.eq(true), staff.role.eq("agent")))
+    .orderBy((staff) => staff.email.asc())
+    .all();
+}
