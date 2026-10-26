@@ -8,6 +8,7 @@ const eslintConfig = defineConfig([
   globalIgnores([
     ".next/**",
     ".prisma-composer/**",
+    "coverage/**",
     "out/**",
     "build/**",
     "migrations/**",

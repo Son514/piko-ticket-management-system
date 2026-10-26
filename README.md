@@ -51,6 +51,16 @@ DATABASE_URL="<production-database-url>" bun run role:set you@example.com admin
 
 Local demo roles are Alice (`admin`), Bob (`agent`), and Carol (`customer`). Existing demo users can be promoted with the same command.
 
+## Tests
+
+```bash
+bun run test
+bun run test:watch
+bun run test:coverage
+```
+
+Tests run in the deploy workflow before preview and production deployments.
+
 ## Email
 
 Copy `.env.example` to `.env` and fill in the Gmail values. `SMTP_PASS` must be a Google App Password, not your account password. If SMTP is not configured, the reset link is logged to the server console in development.
