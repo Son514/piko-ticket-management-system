@@ -2,7 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireUser } from "@/app/server/auth/session";
-import { getTicketById, listAssignableStaff } from "@/app/server/tickets";
+import {
+  closeTicketAction,
+  reopenTicketAction,
+  selfAssignTicketAction,
+} from "@/app/server/ticket-update-actions";
+import { getTicketById, listAssignableAgents } from "@/app/server/tickets";
+import { AdminAssignForm } from "@/components/tickets/admin-assign-form";
+import { TicketActionButton } from "@/components/tickets/ticket-action-button";
 import { TicketBadges } from "@/components/tickets/ticket-badges";
 import { TicketManageForm } from "@/components/tickets/ticket-manage-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -46,7 +53,7 @@ export default async function TicketDetailPage({
   if (!ticket) notFound();
 
   const staffView = isStaff(user.role);
-  const staff = staffView ? await listAssignableStaff() : [];
+  const agents = user.role === "admin" ? await listAssignableAgents() : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -156,21 +163,84 @@ export default async function TicketDetailPage({
             </CardContent>
           </Card>
 
+          {!staffView ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+                <CardDescription>
+                  Close your ticket when the issue is resolved, or reopen it if
+                  you need more help.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {ticket.status !== "closed" ? (
+                  <TicketActionButton
+                    ticketId={ticket.id}
+                    action={closeTicketAction}
+                    label="Close ticket"
+                    pendingLabel="Closing..."
+                    variant="destructive"
+                  />
+                ) : null}
+                {ticket.status === "closed" || ticket.status === "resolved" ? (
+                  <TicketActionButton
+                    ticketId={ticket.id}
+                    action={reopenTicketAction}
+                    label="Reopen ticket"
+                    pendingLabel="Reopening..."
+                  />
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
           {staffView ? (
             <Card>
               <CardHeader>
                 <CardTitle>Manage</CardTitle>
                 <CardDescription>
-                  Update the ticket status or assign it to a staff member.
+                  Update the ticket status or priority.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col gap-5">
                 <TicketManageForm
                   ticketId={ticket.id}
                   status={ticket.status}
-                  assigneeId={ticket.assignee?.id ?? null}
-                  staff={staff}
+                  priority={ticket.priority}
                 />
+
+                {user.role === "admin" ? (
+                  <div className="border-t pt-5">
+                    <AdminAssignForm
+                      ticketId={ticket.id}
+                      assigneeId={ticket.assignee?.id ?? null}
+                      agents={agents}
+                    />
+                  </div>
+                ) : null}
+
+                {user.role === "agent" ? (
+                  <div className="flex flex-col gap-3 border-t pt-5">
+                    {ticket.status === "closed" ||
+                    ticket.status === "resolved" ? (
+                      <TicketActionButton
+                        ticketId={ticket.id}
+                        action={reopenTicketAction}
+                        label="Reopen ticket"
+                        pendingLabel="Reopening..."
+                      />
+                    ) : null}
+
+                    {ticket.assignee === null ? (
+                      <TicketActionButton
+                        ticketId={ticket.id}
+                        action={selfAssignTicketAction}
+                        label="Assign to me"
+                        pendingLabel="Assigning..."
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           ) : null}

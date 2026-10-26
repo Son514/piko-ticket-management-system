@@ -1,11 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
-
 import { updateUserRoleAction } from "@/app/server/admin-actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
+import { useNativeFormAction } from "@/lib/forms/use-native-form-action";
 import { ROLES, ROLE_LABELS, type Role } from "@/lib/roles";
 
 export function UserRoleForm({
@@ -17,13 +15,12 @@ export function UserRoleForm({
   role: Role;
   isSelf: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(
+  const { state, onSubmit, pending } = useNativeFormAction(
     updateUserRoleAction,
-    initialAuthState,
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-2">
+    <form onSubmit={onSubmit} className="flex flex-col gap-2">
       <input type="hidden" name="userId" value={userId} />
       <div className="flex items-center gap-2">
         <select

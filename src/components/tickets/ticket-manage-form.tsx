@@ -1,15 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
-
 import { updateTicketAction } from "@/app/server/ticket-update-actions";
-import type { StaffOption } from "@/app/server/tickets";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
+import { useNativeFormAction } from "@/lib/forms/use-native-form-action";
 import {
+  TICKET_PRIORITIES,
+  TICKET_PRIORITY_LABELS,
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
+  type TicketPriority,
   type TicketStatus,
 } from "@/lib/tickets";
 
@@ -19,21 +19,16 @@ const selectClass =
 export function TicketManageForm({
   ticketId,
   status,
-  assigneeId,
-  staff,
+  priority,
 }: {
   ticketId: number;
   status: TicketStatus;
-  assigneeId: number | null;
-  staff: StaffOption[];
+  priority: TicketPriority;
 }) {
-  const [state, formAction, pending] = useActionState(
-    updateTicketAction,
-    initialAuthState,
-  );
+  const { state, onSubmit, pending } = useNativeFormAction(updateTicketAction);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <input type="hidden" name="ticketId" value={ticketId} />
 
       <div>
@@ -56,20 +51,19 @@ export function TicketManageForm({
       </div>
 
       <div>
-        <label htmlFor="manage-assignee" className="mb-1 block text-sm font-medium">
-          Assignee
+        <label htmlFor="manage-priority" className="mb-1 block text-sm font-medium">
+          Priority
         </label>
         <select
-          id="manage-assignee"
-          name="assigneeId"
-          defaultValue={assigneeId === null ? "" : String(assigneeId)}
+          id="manage-priority"
+          name="priority"
+          defaultValue={priority}
           disabled={pending}
           className={selectClass}
         >
-          <option value="">Unassigned</option>
-          {staff.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.name ?? member.email}
+          {TICKET_PRIORITIES.map((option) => (
+            <option key={option} value={option}>
+              {TICKET_PRIORITY_LABELS[option]}
             </option>
           ))}
         </select>
