@@ -4,6 +4,10 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "Attachment": {
+      "model": "Attachment",
+      "namespace": "public"
+    },
     "PasswordResetToken": {
       "model": "PasswordResetToken",
       "namespace": "public"
@@ -41,9 +45,153 @@
                 "value": "admin"
               }
             ]
+          },
+          "TicketCategory": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "general",
+                "value": "general"
+              },
+              {
+                "name": "account",
+                "value": "account"
+              },
+              {
+                "name": "billing",
+                "value": "billing"
+              },
+              {
+                "name": "technical",
+                "value": "technical"
+              },
+              {
+                "name": "feature",
+                "value": "feature"
+              }
+            ]
+          },
+          "TicketPriority": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "low",
+                "value": "low"
+              },
+              {
+                "name": "medium",
+                "value": "medium"
+              },
+              {
+                "name": "high",
+                "value": "high"
+              },
+              {
+                "name": "urgent",
+                "value": "urgent"
+              }
+            ]
           }
         },
         "models": {
+          "Attachment": {
+            "fields": {
+              "contentType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "data": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bytea@1",
+                  "kind": "scalar"
+                }
+              },
+              "filename": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "size": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "ticketId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "ticket": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "ticketId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Post",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "contentType": {
+                  "column": "contentType"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "data": {
+                  "column": "data"
+                },
+                "filename": {
+                  "column": "filename"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "size": {
+                  "column": "size"
+                },
+                "ticketId": {
+                  "column": "ticketId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Attachment"
+            }
+          },
           "PasswordResetToken": {
             "fields": {
               "createdAt": {
@@ -141,6 +289,19 @@
                   "kind": "scalar"
                 }
               },
+              "category": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TicketCategory",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "content": {
                 "nullable": true,
                 "type": {
@@ -162,6 +323,19 @@
                   "kind": "scalar"
                 }
               },
+              "priority": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TicketPriority",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "title": {
                 "nullable": false,
                 "type": {
@@ -178,6 +352,21 @@
               }
             },
             "relations": {
+              "attachments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "ticketId"
+                  ]
+                },
+                "to": {
+                  "model": "Attachment",
+                  "namespace": "public"
+                }
+              },
               "author": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -200,6 +389,9 @@
                 "authorId": {
                   "column": "authorId"
                 },
+                "category": {
+                  "column": "category"
+                },
                 "content": {
                   "column": "content"
                 },
@@ -208,6 +400,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "priority": {
+                  "column": "priority"
                 },
                 "title": {
                   "column": "title"
@@ -480,6 +675,91 @@
       "public": {
         "entries": {
           "table": {
+            "Attachment": {
+              "columns": {
+                "contentType": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "data": {
+                  "codecId": "pg/bytea@1",
+                  "dataType": "pg/bytea",
+                  "nullable": false
+                },
+                "filename": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "size": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "ticketId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "Attachment_ticketId_idx_2fe526c3"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "ticketId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Attachment"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Post"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "ticketId"
+                  ],
+                  "name": "Attachment_ticketId_idx_2fe526c3",
+                  "prefix": "Attachment_ticketId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "PasswordResetToken": {
               "columns": {
                 "createdAt": {
@@ -567,11 +847,38 @@
               ]
             },
             "Post": {
+              "checks": [
+                {
+                  "expression": "\"category\" IN ('general', 'account', 'billing', 'technical', 'feature')",
+                  "name": "Post_category_check_1c345205",
+                  "prefix": "Post_category_check"
+                },
+                {
+                  "expression": "\"priority\" IN ('low', 'medium', 'high', 'urgent')",
+                  "name": "Post_priority_check_4fb75310",
+                  "prefix": "Post_priority_check"
+                }
+              ],
               "columns": {
                 "authorId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
+                },
+                "category": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "general"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TicketCategory",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "content": {
                   "codecId": "pg/text@1",
@@ -595,6 +902,21 @@
                     "kind": "function"
                   },
                   "nullable": false
+                },
+                "priority": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "medium"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TicketPriority",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "title": {
                   "codecId": "pg/text@1",
@@ -854,6 +1176,25 @@
                 "agent",
                 "admin"
               ]
+            },
+            "TicketCategory": {
+              "kind": "valueSet",
+              "values": [
+                "general",
+                "account",
+                "billing",
+                "technical",
+                "feature"
+              ]
+            },
+            "TicketPriority": {
+              "kind": "valueSet",
+              "values": [
+                "low",
+                "medium",
+                "high",
+                "urgent"
+              ]
             }
           }
         },
@@ -861,7 +1202,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "653e54b4b85d6e59cb077236add11c0959efd1aea52bb2c75ceb2d5fa1e871a1"
+    "storageHash": "455f6306e76be75e49a54066de3e45bfed8541a694c9ad86ec83f0a6fa4174c7"
   },
   "execution": {
     "executionHash": "87555a97148e599ef76723d50d85ccaddcd46a8d478c0badceae8c8f3d1362d1",

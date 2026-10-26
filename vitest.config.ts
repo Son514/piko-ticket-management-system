@@ -23,8 +23,10 @@ export default defineConfig({
       reportsDirectory: "./coverage",
       include: [
         "src/lib/roles.ts",
-        "src/lib/validation/auth.ts",
+        "src/lib/tickets.ts",
         "src/lib/validation/admin.ts",
+        "src/lib/validation/auth.ts",
+        "src/lib/validation/tickets.ts",
         "src/app/server/auth/constants.ts",
         "src/app/server/auth/password.ts",
         "src/app/server/auth/rate-limit.ts",
