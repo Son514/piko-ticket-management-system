@@ -48,12 +48,44 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+enum TicketCategory {
+  @@type("pg/text@1")
+  general   = "general"
+  account   = "account"
+  billing   = "billing"
+  technical = "technical"
+  feature   = "feature"
+}
+
+enum TicketPriority {
+  @@type("pg/text@1")
+  low    = "low"
+  medium = "medium"
+  high   = "high"
+  urgent = "urgent"
+}
+
 model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String?
+  category    TicketCategory @default(general)
+  priority    TicketPriority @default(medium)
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    Int
+  attachments Attachment[]
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+}
+
+model Attachment {
+  id          Int      @id @default(autoincrement())
+  ticketId    Int
+  ticket      Post     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  filename    String
+  contentType String
+  size        Int
+  data        Bytes
+  createdAt   TimestamptzString @default(now())
+  @@index([ticketId])
 }
