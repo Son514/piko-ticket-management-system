@@ -1,13 +1,38 @@
 // use prisma-8
 
 model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  username     String?
+  name         String?
+  passwordHash String?
+  posts        Post[]
+  sessions     Session[]
+  resetTokens  PasswordResetToken[]
+  createdAt    TimestamptzString @default(now())
+  updatedAt    temporal.updatedAtString()
+}
+
+model Session {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String?
-  name      String?
-  posts     Post[]
+  tokenHash String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt TimestamptzString
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt TimestamptzString
+  usedAt    TimestamptzString?
+  createdAt TimestamptzString @default(now())
+  @@index([userId])
 }
 
 model Post {
