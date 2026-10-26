@@ -7,8 +7,11 @@ import {
   reopenTicketAction,
   selfAssignTicketAction,
 } from "@/app/server/ticket-update-actions";
+import { listComments } from "@/app/server/comments";
 import { getTicketById, listAssignableAgents } from "@/app/server/tickets";
 import { AdminAssignForm } from "@/components/tickets/admin-assign-form";
+import { CommentForm } from "@/components/tickets/comment-form";
+import { CommentItem } from "@/components/tickets/comment-item";
 import { TicketActionButton } from "@/components/tickets/ticket-action-button";
 import { TicketBadges } from "@/components/tickets/ticket-badges";
 import { TicketManageForm } from "@/components/tickets/ticket-manage-form";
@@ -54,6 +57,7 @@ export default async function TicketDetailPage({
 
   const staffView = isStaff(user.role);
   const agents = user.role === "admin" ? await listAssignableAgents() : [];
+  const comments = await listComments(ticket.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,6 +127,39 @@ export default async function TicketDetailPage({
                   ))}
                 </ul>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Conversation</CardTitle>
+              <CardDescription>
+                Public replies and internal notes, oldest first.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              {comments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No comments yet.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-3">
+                  {comments.map((comment) => (
+                    <CommentItem
+                      key={comment.id}
+                      comment={comment}
+                      currentUserId={user.id}
+                    />
+                  ))}
+                </ul>
+              )}
+
+              <div className="border-t pt-5">
+                <CommentForm
+                  ticketId={ticket.id}
+                  canInternal={staffView}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

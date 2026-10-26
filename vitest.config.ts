@@ -22,10 +22,13 @@ export default defineConfig({
       reporter: ["text", "html"],
       reportsDirectory: "./coverage",
       include: [
+        "src/lib/comments.ts",
+        "src/lib/comment-permissions.ts",
         "src/lib/roles.ts",
         "src/lib/ticket-permissions.ts",
         "src/lib/tickets.ts",
         "src/lib/validation/admin.ts",
+        "src/lib/validation/comments.ts",
         "src/lib/validation/auth.ts",
         "src/lib/validation/ticket-filters.ts",
         "src/lib/validation/ticket-update.ts",

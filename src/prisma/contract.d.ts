@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'aa0cbbe2faa6bb7a67ca3961092de9f934f1deb117c419a29845644a23342a09'>;
+  StorageHashBase<'74ee42746da6fb19064069a3b022ac249865e687ea456c85e4fc0c9e1156c719'>;
 export type ExecutionHash =
-  ExecutionHashBase<'87555a97148e599ef76723d50d85ccaddcd46a8d478c0badceae8c8f3d1362d1'>;
+  ExecutionHashBase<'1a46c3deba8e99278ff81f54842610892e274ed0896968a88be83d8f099197aa'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -241,6 +241,12 @@ type ParameterizedOutputTypeFunctions = PgParameterizedOutputTypes;
 type FieldTypeOverrides = {
   readonly public: {
     readonly models: {
+      readonly Comment: {
+        readonly visibility: {
+          readonly output: 'public' | 'internal';
+          readonly input: 'public' | 'internal';
+        };
+      };
       readonly Post: {
         readonly category: {
           readonly output: 'general' | 'account' | 'billing' | 'technical' | 'feature';
@@ -280,6 +286,12 @@ export type FieldInputTypes = FieldTypesFromDomain<
 >;
 type ColumnTypeOverrides = {
   readonly public: {
+    readonly Comment: {
+      readonly visibility: {
+        readonly output: 'public' | 'internal';
+        readonly input: 'public' | 'internal';
+      };
+    };
     readonly Post: {
       readonly category: {
         readonly output: 'general' | 'account' | 'billing' | 'technical' | 'feature';
@@ -330,6 +342,19 @@ export namespace Models {
     ticket: public_Post;
     readonly [RelationKeys]?: 'ticket';
   };
+  export type public_Comment = {
+    authorId: FieldOutputTypes['public']['Comment']['authorId'];
+    body: FieldOutputTypes['public']['Comment']['body'];
+    createdAt: FieldOutputTypes['public']['Comment']['createdAt'];
+    editedAt: FieldOutputTypes['public']['Comment']['editedAt'];
+    id: FieldOutputTypes['public']['Comment']['id'];
+    ticketId: FieldOutputTypes['public']['Comment']['ticketId'];
+    updatedAt: FieldOutputTypes['public']['Comment']['updatedAt'];
+    visibility: FieldOutputTypes['public']['Comment']['visibility'];
+    author: public_User;
+    ticket: public_Post;
+    readonly [RelationKeys]?: 'author' | 'ticket';
+  };
   export type public_PasswordResetToken = {
     createdAt: FieldOutputTypes['public']['PasswordResetToken']['createdAt'];
     expiresAt: FieldOutputTypes['public']['PasswordResetToken']['expiresAt'];
@@ -354,7 +379,8 @@ export namespace Models {
     assignee: public_User | null;
     attachments: public_Attachment[];
     author: public_User;
-    readonly [RelationKeys]?: 'assignee' | 'attachments' | 'author';
+    comments: public_Comment[];
+    readonly [RelationKeys]?: 'assignee' | 'attachments' | 'author' | 'comments';
   };
   export type public_Session = {
     createdAt: FieldOutputTypes['public']['Session']['createdAt'];
@@ -378,16 +404,18 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
     assignedTickets: public_Post[];
+    comments: public_Comment[];
     posts: public_Post[];
     resetTokens: public_PasswordResetToken[];
     sessions: public_Session[];
-    readonly [RelationKeys]?: 'assignedTickets' | 'posts' | 'resetTokens' | 'sessions';
+    readonly [RelationKeys]?: 'assignedTickets' | 'comments' | 'posts' | 'resetTokens' | 'sessions';
   };
 }
 
 export declare const models: {
   public: {
     Attachment: Models.public_Attachment;
+    Comment: Models.public_Comment;
     PasswordResetToken: Models.public_PasswordResetToken;
     Post: Models.public_Post;
     Session: Models.public_Session;
@@ -489,6 +517,115 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Post';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly Comment: {
+              columns: {
+                readonly authorId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly body: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly editedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly ticketId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly visibility: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'public'>;
+                  };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'Comment_authorId_idx_e47547ed';
+                  readonly prefix: 'Comment_authorId_idx';
+                  readonly columns: readonly ['authorId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Comment_ticketId_createdAt_idx_bc482a25';
+                  readonly prefix: 'Comment_ticketId_createdAt_idx';
+                  readonly columns: readonly ['ticketId', 'createdAt'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Comment_ticketId_idx_2fe526c3';
+                  readonly prefix: 'Comment_ticketId_idx';
+                  readonly columns: readonly ['ticketId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Comment';
+                    readonly columns: readonly ['ticketId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Post';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Comment';
+                    readonly columns: readonly ['authorId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -857,6 +994,10 @@ type ContractBase = Omit<
             };
           };
           readonly valueSet: {
+            readonly CommentVisibility: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['public', 'internal'];
+            };
             readonly Role: {
               readonly kind: 'valueSet';
               readonly values: readonly ['customer', 'agent', 'admin'];
@@ -888,6 +1029,7 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'Attachment';
     };
+    readonly Comment: { readonly namespace: 'public' & NamespaceId; readonly model: 'Comment' };
     readonly PasswordResetToken: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'PasswordResetToken';
@@ -961,6 +1103,85 @@ type ContractBase = Omit<
                 readonly size: { readonly column: 'size' };
                 readonly storageKey: { readonly column: 'storageKey' };
                 readonly ticketId: { readonly column: 'ticketId' };
+              };
+            };
+          };
+          readonly Comment: {
+            readonly fields: {
+              readonly authorId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly body: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly editedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly ticketId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly visibility: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly author: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['authorId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly ticket: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Post' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['ticketId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Comment';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly authorId: { readonly column: 'authorId' };
+                readonly body: { readonly column: 'body' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly editedAt: { readonly column: 'editedAt' };
+                readonly id: { readonly column: 'id' };
+                readonly ticketId: { readonly column: 'ticketId' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly visibility: { readonly column: 'visibility' };
               };
             };
           };
@@ -1103,6 +1324,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly comments: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Comment';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['ticketId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'Post';
@@ -1242,6 +1474,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['assigneeId'];
                 };
               };
+              readonly comments: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Comment';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['authorId'];
+                };
+              };
               readonly posts: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Post' };
                 readonly cardinality: '1:N';
@@ -1292,6 +1535,13 @@ type ContractBase = Omit<
           };
         };
         readonly enum: {
+          readonly CommentVisibility: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'public'; readonly value: 'public' },
+              { readonly name: 'internal'; readonly value: 'internal' },
+            ];
+          };
           readonly Role: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -1331,6 +1581,10 @@ type ContractBase = Omit<
           };
         };
         readonly enumMemberTypes?: {
+          readonly CommentVisibility: readonly [
+            { readonly name: 'public'; readonly value: 'public' },
+            { readonly name: 'internal'; readonly value: 'internal' },
+          ];
           readonly Role: readonly [
             { readonly name: 'customer'; readonly value: 'customer' },
             { readonly name: 'agent'; readonly value: 'agent' },
@@ -1392,6 +1646,15 @@ type ContractBase = Omit<
     readonly executionHash: ExecutionHash;
     readonly mutations: {
       readonly defaults: readonly [
+        {
+          readonly onCreate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'Comment';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
         {
           readonly onCreate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };
           readonly onUpdate: { readonly id: 'timestamptzStringNow'; readonly kind: 'generator' };

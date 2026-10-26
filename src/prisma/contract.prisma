@@ -16,8 +16,9 @@ model User {
   role            Role     @default(customer)
   isActive        Boolean  @default(true)
   deactivatedAt   TimestamptzString?
-  posts           Post[]   @relation("TicketAuthor")
-  assignedTickets Post[]   @relation("TicketAssignee")
+  posts           Post[]    @relation("TicketAuthor")
+  assignedTickets Post[]    @relation("TicketAssignee")
+  comments        Comment[]
   sessions        Session[]
   resetTokens   PasswordResetToken[]
   createdAt     TimestamptzString @default(now())
@@ -75,6 +76,12 @@ enum TicketStatus {
   closed      = "closed"
 }
 
+enum CommentVisibility {
+  @@type("pg/text@1")
+  public   = "public"
+  internal = "internal"
+}
+
 model Post {
   id          Int      @id @default(autoincrement())
   title       String
@@ -87,11 +94,28 @@ model Post {
   assignee    User?    @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   assigneeId  Int?
   attachments Attachment[]
+  comments    Comment[]
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
 
   @@index([status])
   @@index([assigneeId])
+}
+
+model Comment {
+  id         Int               @id @default(autoincrement())
+  ticketId   Int
+  ticket     Post              @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId   Int
+  author     User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body       String
+  visibility CommentVisibility @default(public)
+  editedAt   TimestamptzString?
+  createdAt  TimestamptzString @default(now())
+  updatedAt  temporal.updatedAtString()
+
+  @@index([ticketId, createdAt])
+  @@index([authorId])
 }
 
 model Attachment {
