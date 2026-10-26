@@ -91,6 +91,31 @@
                 "value": "urgent"
               }
             ]
+          },
+          "TicketStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "open",
+                "value": "open"
+              },
+              {
+                "name": "in_progress",
+                "value": "in_progress"
+              },
+              {
+                "name": "waiting",
+                "value": "waiting"
+              },
+              {
+                "name": "resolved",
+                "value": "resolved"
+              },
+              {
+                "name": "closed",
+                "value": "closed"
+              }
+            ]
           }
         },
         "models": {
@@ -282,6 +307,13 @@
           },
           "Post": {
             "fields": {
+              "assigneeId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "authorId": {
                 "nullable": false,
                 "type": {
@@ -336,6 +368,19 @@
                   "plane": "domain"
                 }
               },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TicketStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "title": {
                 "nullable": false,
                 "type": {
@@ -352,6 +397,22 @@
               }
             },
             "relations": {
+              "assignee": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "assigneeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
               "attachments": {
                 "cardinality": "1:N",
                 "on": {
@@ -386,6 +447,9 @@
             },
             "storage": {
               "fields": {
+                "assigneeId": {
+                  "column": "assigneeId"
+                },
                 "authorId": {
                   "column": "authorId"
                 },
@@ -403,6 +467,9 @@
                 },
                 "priority": {
                   "column": "priority"
+                },
+                "status": {
+                  "column": "status"
                 },
                 "title": {
                   "column": "title"
@@ -583,6 +650,21 @@
               }
             },
             "relations": {
+              "assignedTickets": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "assigneeId"
+                  ]
+                },
+                "to": {
+                  "model": "Post",
+                  "namespace": "public"
+                }
+              },
               "posts": {
                 "cardinality": "1:N",
                 "on": {
@@ -857,9 +939,19 @@
                   "expression": "\"priority\" IN ('low', 'medium', 'high', 'urgent')",
                   "name": "Post_priority_check_4fb75310",
                   "prefix": "Post_priority_check"
+                },
+                {
+                  "expression": "\"status\" IN ('open', 'in_progress', 'waiting', 'resolved', 'closed')",
+                  "name": "Post_status_check_133bb1f4",
+                  "prefix": "Post_status_check"
                 }
               ],
               "columns": {
+                "assigneeId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
                 "authorId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -918,6 +1010,21 @@
                     "plane": "storage"
                   }
                 },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "open"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TicketStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
                 "title": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -948,15 +1055,51 @@
                     "namespaceId": "public",
                     "tableName": "User"
                   }
+                },
+                {
+                  "index": {
+                    "name": "Post_assigneeId_idx_fd12ae38"
+                  },
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "assigneeId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Post"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
                 }
               ],
               "indexes": [
+                {
+                  "columns": [
+                    "assigneeId"
+                  ],
+                  "name": "Post_assigneeId_idx_fd12ae38",
+                  "prefix": "Post_assigneeId_idx",
+                  "unique": false
+                },
                 {
                   "columns": [
                     "authorId"
                   ],
                   "name": "Post_authorId_idx_e47547ed",
                   "prefix": "Post_authorId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "status"
+                  ],
+                  "name": "Post_status_idx_e98638ab",
+                  "prefix": "Post_status_idx",
                   "unique": false
                 }
               ],
@@ -1195,6 +1338,16 @@
                 "high",
                 "urgent"
               ]
+            },
+            "TicketStatus": {
+              "kind": "valueSet",
+              "values": [
+                "open",
+                "in_progress",
+                "waiting",
+                "resolved",
+                "closed"
+              ]
             }
           }
         },
@@ -1202,7 +1355,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "455f6306e76be75e49a54066de3e45bfed8541a694c9ad86ec83f0a6fa4174c7"
+    "storageHash": "2523237cd5c8b7bf117a11e835cb5472c347a91a11bf861a1956c6b56e8de435"
   },
   "execution": {
     "executionHash": "87555a97148e599ef76723d50d85ccaddcd46a8d478c0badceae8c8f3d1362d1",

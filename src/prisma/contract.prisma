@@ -13,11 +13,12 @@ model User {
   username      String?
   name          String?
   passwordHash  String?
-  role          Role     @default(customer)
-  isActive      Boolean  @default(true)
-  deactivatedAt TimestamptzString?
-  posts         Post[]
-  sessions      Session[]
+  role            Role     @default(customer)
+  isActive        Boolean  @default(true)
+  deactivatedAt   TimestamptzString?
+  posts           Post[]   @relation("TicketAuthor")
+  assignedTickets Post[]   @relation("TicketAssignee")
+  sessions        Session[]
   resetTokens   PasswordResetToken[]
   createdAt     TimestamptzString @default(now())
   updatedAt     temporal.updatedAtString()
@@ -65,17 +66,32 @@ enum TicketPriority {
   urgent = "urgent"
 }
 
+enum TicketStatus {
+  @@type("pg/text@1")
+  open        = "open"
+  in_progress = "in_progress"
+  waiting     = "waiting"
+  resolved    = "resolved"
+  closed      = "closed"
+}
+
 model Post {
   id          Int      @id @default(autoincrement())
   title       String
   content     String?
   category    TicketCategory @default(general)
   priority    TicketPriority @default(medium)
-  author      User     @relation(fields: [authorId], references: [id])
+  status      TicketStatus @default(open)
+  author      User     @relation("TicketAuthor", fields: [authorId], references: [id])
   authorId    Int
+  assignee    User?    @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assigneeId  Int?
   attachments Attachment[]
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
+
+  @@index([status])
+  @@index([assigneeId])
 }
 
 model Attachment {

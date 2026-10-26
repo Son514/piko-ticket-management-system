@@ -26,6 +26,8 @@ export default defineConfig({
         "src/lib/tickets.ts",
         "src/lib/validation/admin.ts",
         "src/lib/validation/auth.ts",
+        "src/lib/validation/ticket-filters.ts",
+        "src/lib/validation/ticket-update.ts",
         "src/lib/validation/tickets.ts",
         "src/app/server/auth/constants.ts",
         "src/app/server/auth/password.ts",
