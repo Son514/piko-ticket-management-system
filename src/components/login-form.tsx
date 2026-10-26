@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "cn";
 
 import { signInAction } from "@/app/server/auth/actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,6 +15,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuthForm } from "@/lib/forms/use-auth-form";
+import { signInSchema, type SignInValues } from "@/lib/validation/auth";
 
 export function LoginForm({
   className,
@@ -26,13 +27,25 @@ export function LoginForm({
   next?: string;
   reset?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(signInAction, initialAuthState);
+  const { form, state, onSubmit, pending } = useAuthForm<SignInValues>(
+    signInAction,
+    {
+      resolver: zodResolver(signInSchema),
+      defaultValues: { email: "", password: "" },
+      mode: "onTouched",
+    },
+  );
+  const errors = form.formState.errors;
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form action={formAction} className="p-6 md:p-8">
+          <form
+            onSubmit={onSubmit}
+            noValidate
+            className="p-6 md:p-8"
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -50,30 +63,26 @@ export function LoginForm({
                 </p>
               ) : null}
 
-              {state.error ? (
-                <FieldError>{state.error}</FieldError>
-              ) : null}
+              {state.error ? <FieldError>{state.error}</FieldError> : null}
 
               <input type="hidden" name="next" value={next ?? ""} />
 
-              <Field data-invalid={state.fieldErrors?.email ? true : undefined}>
+              <Field data-invalid={errors.email ? true : undefined}>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   autoComplete="email"
-                  defaultValue={state.values?.email ?? ""}
-                  aria-invalid={state.fieldErrors?.email ? true : undefined}
-                  required
+                  aria-invalid={errors.email ? true : undefined}
+                  {...form.register("email")}
                 />
-                {state.fieldErrors?.email?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.email?.message ? (
+                  <FieldError>{errors.email.message}</FieldError>
+                ) : null}
               </Field>
 
-              <Field data-invalid={state.fieldErrors?.password ? true : undefined}>
+              <Field data-invalid={errors.password ? true : undefined}>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <Link
@@ -85,15 +94,14 @@ export function LoginForm({
                 </div>
                 <Input
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="current-password"
-                  aria-invalid={state.fieldErrors?.password ? true : undefined}
-                  required
+                  aria-invalid={errors.password ? true : undefined}
+                  {...form.register("password")}
                 />
-                {state.fieldErrors?.password?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.password?.message ? (
+                  <FieldError>{errors.password.message}</FieldError>
+                ) : null}
               </Field>
 
               <Field>

@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { requestPasswordResetAction } from "@/app/server/auth/actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -15,12 +14,20 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuthForm } from "@/lib/forms/use-auth-form";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordValues,
+} from "@/lib/validation/auth";
 
 export function ForgotPasswordForm() {
-  const [state, formAction, pending] = useActionState(
-    requestPasswordResetAction,
-    initialAuthState,
-  );
+  const { form, state, onSubmit, pending } =
+    useAuthForm<ForgotPasswordValues>(requestPasswordResetAction, {
+      resolver: zodResolver(forgotPasswordSchema),
+      defaultValues: { email: "" },
+      mode: "onTouched",
+    });
+  const errors = form.formState.errors;
 
   return (
     <Card>
@@ -45,23 +52,21 @@ export function ForgotPasswordForm() {
 
           {state.error ? <FieldError>{state.error}</FieldError> : null}
 
-          <form action={formAction}>
+          <form onSubmit={onSubmit} noValidate>
             <FieldGroup>
-              <Field data-invalid={state.fieldErrors?.email ? true : undefined}>
+              <Field data-invalid={errors.email ? true : undefined}>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   autoComplete="email"
-                  defaultValue={state.values?.email ?? ""}
-                  aria-invalid={state.fieldErrors?.email ? true : undefined}
-                  required
+                  aria-invalid={errors.email ? true : undefined}
+                  {...form.register("email")}
                 />
-                {state.fieldErrors?.email?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.email?.message ? (
+                  <FieldError>{errors.email.message}</FieldError>
+                ) : null}
               </Field>
 
               <Field>

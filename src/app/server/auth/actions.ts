@@ -5,6 +5,14 @@ import { redirect } from "next/navigation";
 
 import { connectDatabase, db } from "@/prisma/db";
 import { seed } from "@/prisma/seed";
+import {
+  formString,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+  toFieldErrors,
+} from "@/lib/validation/auth";
 import { getAppConfig } from "../config";
 import { sendPasswordResetEmail } from "../email";
 import { RESET_TOKEN_TTL_MS, safeNextPath } from "./constants";
@@ -14,13 +22,6 @@ import { findValidPasswordResetToken } from "./reset";
 import { createSession, destroySession } from "./session";
 import { generateToken, hashToken } from "./tokens";
 import type { AuthState } from "./types";
-import {
-  normalizeEmail,
-  validateEmail,
-  validateName,
-  validatePassword,
-  validateUsername,
-} from "./validation";
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
@@ -55,33 +56,24 @@ export async function signUpAction(
   _previousState: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const email = normalizeEmail(formData.get("email"));
-  const name = String(formData.get("name") ?? "").trim();
-  const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  const raw = {
+    name: formString(formData, "name"),
+    email: formString(formData, "email"),
+    password: formString(formData, "password"),
+    confirmPassword: formString(formData, "confirmPassword"),
+  };
   const next = safeNextPath(formData.get("next")) ?? "/dashboard";
+  const values = {
+    email: raw.email.trim().toLowerCase(),
+    name: raw.name.trim(),
+  };
 
-  const fieldErrors: Record<string, string[]> = {};
-  const emailError = validateEmail(email);
-  if (emailError) fieldErrors.email = [emailError];
-
-  const nameError = validateName(name);
-  if (nameError) fieldErrors.name = [nameError];
-
-  const usernameError = validateUsername(username);
-  if (usernameError) fieldErrors.username = [usernameError];
-
-  const passwordError = validatePassword(password);
-  if (passwordError) fieldErrors.password = [passwordError];
-
-  if (password !== confirmPassword) {
-    fieldErrors.confirmPassword = ["Passwords do not match."];
+  const parsed = signUpSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { fieldErrors: toFieldErrors(parsed.error), values };
   }
 
-  if (Object.keys(fieldErrors).length > 0) {
-    return { fieldErrors, values: { email, name, username } };
-  }
+  const { email, name, password } = parsed.data;
 
   const limit = rateLimit(`signup:${await getClientIp()}`, 10, FIFTEEN_MINUTES);
   if (!limit.ok) return tooManyAttempts(limit.retryAfterSeconds);
@@ -91,8 +83,8 @@ export async function signUpAction(
   const existing = await db.orm.public.User.select("id").where({ email }).first();
   if (existing) {
     return {
-      error: "An account with this email already exists.",
-      values: { email, name, username },
+      fieldErrors: { email: ["An account with this email already exists."] },
+      values,
     };
   }
 
@@ -101,7 +93,7 @@ export async function signUpAction(
     const user = await db.orm.public.User.select("id").create({
       email,
       name: name || null,
-      username: username || null,
+      username: null,
       passwordHash,
     });
 
@@ -110,7 +102,7 @@ export async function signUpAction(
     console.error("[auth] sign-up failed", error);
     return {
       error: "We could not create your account. Please try again.",
-      values: { email, name, username },
+      values,
     };
   }
 
@@ -121,17 +113,20 @@ export async function signInAction(
   _previousState: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const email = normalizeEmail(formData.get("email"));
-  const password = String(formData.get("password") ?? "");
+  const rawEmail = formString(formData, "email");
+  const rawPassword = formString(formData, "password");
   const next = safeNextPath(formData.get("next")) ?? "/dashboard";
+  const values = { email: rawEmail.trim().toLowerCase() };
 
-  const fieldErrors: Record<string, string[]> = {};
-  if (!email) fieldErrors.email = ["Enter your email address."];
-  if (!password) fieldErrors.password = ["Enter your password."];
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return { fieldErrors, values: { email } };
+  const parsed = signInSchema.safeParse({
+    email: rawEmail,
+    password: rawPassword,
+  });
+  if (!parsed.success) {
+    return { fieldErrors: toFieldErrors(parsed.error), values };
   }
+
+  const { email, password } = parsed.data;
 
   const limit = rateLimit(
     `signin:${email}:${await getClientIp()}`,
@@ -155,11 +150,11 @@ export async function signInAction(
   if (!user || !user.passwordHash) {
     // Keep the response time comparable whether or not the account exists.
     await verifyPassword(password, await getDummyPasswordHash());
-    return { error: "Invalid email or password.", values: { email } };
+    return { error: "Invalid email or password.", values };
   }
 
   if (!(await verifyPassword(password, user.passwordHash))) {
-    return { error: "Invalid email or password.", values: { email } };
+    return { error: "Invalid email or password.", values };
   }
 
   await createSession(user.id);
@@ -175,12 +170,15 @@ export async function requestPasswordResetAction(
   _previousState: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const email = normalizeEmail(formData.get("email"));
-  const emailError = validateEmail(email);
+  const rawEmail = formString(formData, "email");
+  const values = { email: rawEmail.trim().toLowerCase() };
 
-  if (emailError) {
-    return { fieldErrors: { email: [emailError] }, values: { email } };
+  const parsed = forgotPasswordSchema.safeParse({ email: rawEmail });
+  if (!parsed.success) {
+    return { fieldErrors: toFieldErrors(parsed.error), values };
   }
+
+  const { email } = parsed.data;
 
   const limit = rateLimit(
     `reset-request:${email}:${await getClientIp()}`,
@@ -191,7 +189,7 @@ export async function requestPasswordResetAction(
 
   const success: AuthState = {
     success: "If an account exists for that email, we sent a password reset link.",
-    values: { email },
+    values,
   };
 
   try {
@@ -234,23 +232,16 @@ export async function resetPasswordAction(
   _previousState: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const token = String(formData.get("token") ?? "");
-  const password = String(formData.get("password") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
-
-  const fieldErrors: Record<string, string[]> = {};
-  const passwordError = validatePassword(password);
-  if (passwordError) fieldErrors.password = [passwordError];
-
-  if (password !== confirmPassword) {
-    fieldErrors.confirmPassword = ["Passwords do not match."];
+  const parsed = resetPasswordSchema.safeParse({
+    token: formString(formData, "token"),
+    password: formString(formData, "password"),
+    confirmPassword: formString(formData, "confirmPassword"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: toFieldErrors(parsed.error) };
   }
 
-  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
-
-  if (!token) {
-    return { error: "This reset link is invalid or has expired. Request a new one." };
-  }
+  const { token, password } = parsed.data;
 
   const resetToken = await findValidPasswordResetToken(token);
   if (!resetToken) {

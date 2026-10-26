@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "cn";
 
 import { signUpAction } from "@/app/server/auth/actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,6 +15,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuthForm } from "@/lib/forms/use-auth-form";
+import { signUpSchema, type SignUpValues } from "@/lib/validation/auth";
 
 export function SignupForm({
   className,
@@ -24,13 +25,30 @@ export function SignupForm({
 }: React.ComponentProps<"div"> & {
   next?: string;
 }) {
-  const [state, formAction, pending] = useActionState(signUpAction, initialAuthState);
+  const { form, state, onSubmit, pending } = useAuthForm<SignUpValues>(
+    signUpAction,
+    {
+      resolver: zodResolver(signUpSchema),
+      defaultValues: {
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      },
+      mode: "onTouched",
+    },
+  );
+  const errors = form.formState.errors;
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form action={formAction} className="p-6 md:p-8">
+          <form
+            onSubmit={onSubmit}
+            noValidate
+            className="p-6 md:p-8"
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Create your account</h1>
@@ -43,76 +61,69 @@ export function SignupForm({
 
               <input type="hidden" name="next" value={next ?? ""} />
 
-              <Field data-invalid={state.fieldErrors?.name ? true : undefined}>
+              <Field data-invalid={errors.name ? true : undefined}>
                 <FieldLabel htmlFor="name">Name</FieldLabel>
                 <Input
                   id="name"
-                  name="name"
                   type="text"
                   placeholder="Jane Doe"
                   autoComplete="name"
-                  defaultValue={state.values?.name ?? ""}
-                  aria-invalid={state.fieldErrors?.name ? true : undefined}
+                  aria-invalid={errors.name ? true : undefined}
+                  {...form.register("name")}
                 />
-                {state.fieldErrors?.name?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.name?.message ? (
+                  <FieldError>{errors.name.message}</FieldError>
+                ) : null}
               </Field>
 
-              <Field data-invalid={state.fieldErrors?.email ? true : undefined}>
+              <Field data-invalid={errors.email ? true : undefined}>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
-                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   autoComplete="email"
-                  defaultValue={state.values?.email ?? ""}
-                  aria-invalid={state.fieldErrors?.email ? true : undefined}
-                  required
+                  aria-invalid={errors.email ? true : undefined}
+                  {...form.register("email")}
                 />
                 <FieldDescription>
                   We&apos;ll use this to contact you. We will not share your
                   email with anyone else.
                 </FieldDescription>
-                {state.fieldErrors?.email?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.email?.message ? (
+                  <FieldError>{errors.email.message}</FieldError>
+                ) : null}
               </Field>
 
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
-                  <Field data-invalid={state.fieldErrors?.password ? true : undefined}>
+                  <Field data-invalid={errors.password ? true : undefined}>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
                     <Input
                       id="password"
-                      name="password"
                       type="password"
                       autoComplete="new-password"
-                      minLength={8}
-                      aria-invalid={state.fieldErrors?.password ? true : undefined}
-                      required
+                      aria-invalid={errors.password ? true : undefined}
+                      {...form.register("password")}
                     />
-                    {state.fieldErrors?.password?.map((message) => (
-                      <FieldError key={message}>{message}</FieldError>
-                    ))}
+                    {errors.password?.message ? (
+                      <FieldError>{errors.password.message}</FieldError>
+                    ) : null}
                   </Field>
-                  <Field data-invalid={state.fieldErrors?.confirmPassword ? true : undefined}>
+                  <Field data-invalid={errors.confirmPassword ? true : undefined}>
                     <FieldLabel htmlFor="confirm-password">
                       Confirm Password
                     </FieldLabel>
                     <Input
                       id="confirm-password"
-                      name="confirmPassword"
                       type="password"
                       autoComplete="new-password"
-                      minLength={8}
-                      aria-invalid={state.fieldErrors?.confirmPassword ? true : undefined}
-                      required
+                      aria-invalid={errors.confirmPassword ? true : undefined}
+                      {...form.register("confirmPassword")}
                     />
-                    {state.fieldErrors?.confirmPassword?.map((message) => (
-                      <FieldError key={message}>{message}</FieldError>
-                    ))}
+                    {errors.confirmPassword?.message ? (
+                      <FieldError>{errors.confirmPassword.message}</FieldError>
+                    ) : null}
                   </Field>
                 </Field>
                 <FieldDescription>

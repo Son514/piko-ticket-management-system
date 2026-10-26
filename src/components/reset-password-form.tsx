@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { resetPasswordAction } from "@/app/server/auth/actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -15,12 +14,20 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuthForm } from "@/lib/forms/use-auth-form";
+import {
+  resetPasswordSchema,
+  type ResetPasswordValues,
+} from "@/lib/validation/auth";
 
 export function ResetPasswordForm({ token }: { token: string }) {
-  const [state, formAction, pending] = useActionState(
-    resetPasswordAction,
-    initialAuthState,
-  );
+  const { form, state, onSubmit, pending } =
+    useAuthForm<ResetPasswordValues>(resetPasswordAction, {
+      resolver: zodResolver(resetPasswordSchema),
+      defaultValues: { token, password: "", confirmPassword: "" },
+      mode: "onTouched",
+    });
+  const errors = form.formState.errors;
 
   return (
     <Card>
@@ -35,40 +42,36 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
           {state.error ? <FieldError>{state.error}</FieldError> : null}
 
-          <form action={formAction}>
+          <form onSubmit={onSubmit} noValidate>
             <FieldGroup>
               <input type="hidden" name="token" value={token} />
 
-              <Field data-invalid={state.fieldErrors?.password ? true : undefined}>
+              <Field data-invalid={errors.password ? true : undefined}>
                 <FieldLabel htmlFor="password">New password</FieldLabel>
                 <Input
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="new-password"
-                  minLength={8}
-                  aria-invalid={state.fieldErrors?.password ? true : undefined}
-                  required
+                  aria-invalid={errors.password ? true : undefined}
+                  {...form.register("password")}
                 />
-                {state.fieldErrors?.password?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.password?.message ? (
+                  <FieldError>{errors.password.message}</FieldError>
+                ) : null}
               </Field>
 
-              <Field data-invalid={state.fieldErrors?.confirmPassword ? true : undefined}>
+              <Field data-invalid={errors.confirmPassword ? true : undefined}>
                 <FieldLabel htmlFor="confirm-password">Confirm password</FieldLabel>
                 <Input
                   id="confirm-password"
-                  name="confirmPassword"
                   type="password"
                   autoComplete="new-password"
-                  minLength={8}
-                  aria-invalid={state.fieldErrors?.confirmPassword ? true : undefined}
-                  required
+                  aria-invalid={errors.confirmPassword ? true : undefined}
+                  {...form.register("confirmPassword")}
                 />
-                {state.fieldErrors?.confirmPassword?.map((message) => (
-                  <FieldError key={message}>{message}</FieldError>
-                ))}
+                {errors.confirmPassword?.message ? (
+                  <FieldError>{errors.confirmPassword.message}</FieldError>
+                ) : null}
               </Field>
 
               <Field>

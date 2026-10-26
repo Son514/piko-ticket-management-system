@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { updateAccountAction } from "@/app/server/account-actions";
-import { initialAuthState } from "@/app/server/auth/types";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -13,6 +12,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuthForm } from "@/lib/forms/use-auth-form";
+import { accountSchema, type AccountValues } from "@/lib/validation/auth";
 
 export function AccountForm({
   name,
@@ -21,13 +22,16 @@ export function AccountForm({
   name: string;
   username: string;
 }) {
-  const [state, formAction, pending] = useActionState(
-    updateAccountAction,
-    initialAuthState,
-  );
+  const { form, state, onSubmit, pending } =
+    useAuthForm<AccountValues>(updateAccountAction, {
+      resolver: zodResolver(accountSchema),
+      defaultValues: { name, username },
+      mode: "onTouched",
+    });
+  const errors = form.formState.errors;
 
   return (
-    <form action={formAction}>
+    <form onSubmit={onSubmit} noValidate>
       <FieldGroup>
         {state.success ? (
           <p
@@ -40,38 +44,36 @@ export function AccountForm({
 
         {state.error ? <FieldError>{state.error}</FieldError> : null}
 
-        <Field data-invalid={state.fieldErrors?.name ? true : undefined}>
+        <Field data-invalid={errors.name ? true : undefined}>
           <FieldLabel htmlFor="name">Name</FieldLabel>
           <Input
             id="name"
-            name="name"
             type="text"
             autoComplete="name"
-            defaultValue={state.values?.name ?? name}
-            aria-invalid={state.fieldErrors?.name ? true : undefined}
+            aria-invalid={errors.name ? true : undefined}
+            {...form.register("name")}
           />
-          {state.fieldErrors?.name?.map((message) => (
-            <FieldError key={message}>{message}</FieldError>
-          ))}
+          {errors.name?.message ? (
+            <FieldError>{errors.name.message}</FieldError>
+          ) : null}
         </Field>
 
-        <Field data-invalid={state.fieldErrors?.username ? true : undefined}>
+        <Field data-invalid={errors.username ? true : undefined}>
           <FieldLabel htmlFor="username">Username</FieldLabel>
           <Input
             id="username"
-            name="username"
             type="text"
             autoComplete="username"
             placeholder="jane_doe"
-            defaultValue={state.values?.username ?? username}
-            aria-invalid={state.fieldErrors?.username ? true : undefined}
+            aria-invalid={errors.username ? true : undefined}
+            {...form.register("username")}
           />
           <FieldDescription>
             3–32 characters. Letters, numbers, and underscores only.
           </FieldDescription>
-          {state.fieldErrors?.username?.map((message) => (
-            <FieldError key={message}>{message}</FieldError>
-          ))}
+          {errors.username?.message ? (
+            <FieldError>{errors.username.message}</FieldError>
+          ) : null}
         </Field>
 
         <Field>
