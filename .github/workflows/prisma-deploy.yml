@@ -27,6 +27,14 @@ jobs:
 
       - id: deploy
         uses: prisma/cloud-deploy-action@v1
+        env:
+          # Optional. Configure these in the Prisma project or as Actions
+          # variables/secrets; SMTP_PASS is only bound when it is present.
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USER: ${{ vars.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAIL_FROM: ${{ vars.EMAIL_FROM }}
         with:
           module: module.ts
           install-command: bun install --frozen-lockfile

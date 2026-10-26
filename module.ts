@@ -15,6 +15,12 @@ export default module("piko-ticket-management-system", ({ provision }) => {
     { id: "database" },
   );
 
+  // `envSecret` is always collected by the deploy preflight, even when the
+  // schema field is optional. Include it only when the deploy shell actually
+  // has the credential, so a deployment without SMTP configured still
+  // succeeds; set the SMTP_PASS Actions secret to enable email delivery.
+  const smtpPass = process.env.SMTP_PASS ? envSecret("SMTP_PASS") : undefined;
+
   provision(app, {
     deps: { database },
     input: {
@@ -22,7 +28,7 @@ export default module("piko-ticket-management-system", ({ provision }) => {
       smtpHost: envParam("SMTP_HOST"),
       smtpPort: envParam("SMTP_PORT"),
       smtpUser: envParam("SMTP_USER"),
-      smtpPass: envSecret("SMTP_PASS"),
+      ...(smtpPass ? { smtpPass } : {}),
       emailFrom: envParam("EMAIL_FROM"),
     },
   });
