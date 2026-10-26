@@ -12,12 +12,11 @@ export default compute({
     database: postgres(appContract),
   },
   input: type({
-    "appUrl?": "string",
-    "smtpHost?": "string",
-    "smtpPort?": "string",
-    "smtpUser?": "string",
+    "smtpHost?": secretString(),
+    "smtpPort?": secretString(),
+    "smtpUser?": secretString(),
     "smtpPass?": secretString(),
-    "emailFrom?": "string",
+    "emailFrom?": secretString(),
   }),
   build: nextjs({ module: import.meta.url, appDir: "." }),
 });

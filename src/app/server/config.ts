@@ -2,13 +2,14 @@ import "server-only";
 
 import service from "../../../service.ts";
 
+type SecretBox = { expose(): string };
+
 type ComposerInput = {
-  appUrl?: string;
-  smtpHost?: string;
-  smtpPort?: string;
-  smtpUser?: string;
-  smtpPass?: { expose(): string };
-  emailFrom?: string;
+  smtpHost?: SecretBox;
+  smtpPort?: SecretBox;
+  smtpUser?: SecretBox;
+  smtpPass?: SecretBox;
+  emailFrom?: SecretBox;
 };
 
 export type AppConfig = {
@@ -29,7 +30,7 @@ function readComposerInput(): ComposerInput | undefined {
   }
 }
 
-function exposeSecret(secret: ComposerInput["smtpPass"]): string | undefined {
+function exposeSecret(secret: SecretBox | undefined): string | undefined {
   if (!secret) return undefined;
   try {
     return secret.expose();
@@ -45,6 +46,10 @@ let cachedConfig: AppConfig | undefined;
  * Configuration comes from Composer's service input when the app runs under
  * `prisma dev`/`prisma deploy`, and from `.env` when it runs under plain
  * `next dev`.
+ *
+ * The reset-link origin is intentionally not taken from the Prisma input:
+ * previews should derive their own origin from the request so links do not
+ * point at production. `APP_URL` can still override it for local runs.
  */
 export function getAppConfig(): AppConfig {
   if (cachedConfig) return cachedConfig;
@@ -52,12 +57,12 @@ export function getAppConfig(): AppConfig {
   const input = readComposerInput();
 
   cachedConfig = {
-    appUrl: input?.appUrl ?? process.env.APP_URL,
-    smtpHost: input?.smtpHost ?? process.env.SMTP_HOST,
-    smtpPort: input?.smtpPort ?? process.env.SMTP_PORT,
-    smtpUser: input?.smtpUser ?? process.env.SMTP_USER,
+    appUrl: process.env.APP_URL,
+    smtpHost: exposeSecret(input?.smtpHost) ?? process.env.SMTP_HOST,
+    smtpPort: exposeSecret(input?.smtpPort) ?? process.env.SMTP_PORT,
+    smtpUser: exposeSecret(input?.smtpUser) ?? process.env.SMTP_USER,
     smtpPass: exposeSecret(input?.smtpPass) ?? process.env.SMTP_PASS,
-    emailFrom: input?.emailFrom ?? process.env.EMAIL_FROM,
+    emailFrom: exposeSecret(input?.emailFrom) ?? process.env.EMAIL_FROM,
   };
 
   return cachedConfig;
