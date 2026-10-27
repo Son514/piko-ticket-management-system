@@ -119,7 +119,7 @@ export function LoginForm({
             </FieldGroup>
           </form>
 
-          <div className="relative hidden overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-muted md:flex md:flex-col md:justify-between md:p-8 md:text-primary-foreground">
+          <div className="relative hidden overflow-hidden bg-primary md:flex md:flex-col md:justify-between md:p-8 md:text-primary-foreground">
             <p className="text-sm font-semibold tracking-wide">Piko</p>
             <div>
               <p className="text-2xl font-semibold">Support that keeps moving.</p>
