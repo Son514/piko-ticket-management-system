@@ -61,6 +61,17 @@ bun run test:coverage
 
 Tests run in the deploy workflow before preview and production deployments.
 
+### End-to-end tests
+
+Playwright uses a dedicated Postgres database and runs the production build on port 3100. It does not touch the normal development database or dev server.
+
+```bash
+createdb piko_e2e
+E2E_DATABASE_URL=postgresql://user:password@localhost:5432/piko_e2e bun run test:e2e
+```
+
+The Playwright web server applies migrations, seeds Alice/Bob/Carol, builds the app, and starts it on port 3100. Set `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium` to use a system Chromium locally, or run `bunx playwright install chromium`.
+
 ## Object storage
 
 Ticket attachments use a Prisma Object Store bucket through the S3 API when these variables are configured:

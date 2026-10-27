@@ -26,9 +26,40 @@ jobs:
 
       - run: bun run test
 
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: piko_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/piko_e2e?sslmode=disable
+      APP_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - run: bunx playwright install --with-deps chromium
+
+      - run: bun run test:e2e
+
   deploy:
     if: github.event_name == 'push'
-    needs: test
+    needs: [test, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

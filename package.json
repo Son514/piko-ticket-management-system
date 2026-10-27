@@ -22,8 +22,12 @@
     "migration:status": "prisma migration status",
     "role:set": "bun scripts/set-role.ts",
     "start": "next start",
+    "e2e:db": "prisma db migrate && bun scripts/seed-e2e.ts",
+    "e2e:serve": "bun run e2e:db && next build && next start -p 3100",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -50,6 +54,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@prisma/dev": "0.25.2",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.5",
