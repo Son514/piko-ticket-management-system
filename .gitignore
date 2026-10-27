@@ -24,6 +24,9 @@ next-env.d.ts
 coverage/
 .vercel/
 .turbo/
+playwright-report/
+test-results/
+blob-report/
 
 # misc
 .DS_Store
